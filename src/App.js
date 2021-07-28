@@ -9,6 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 class App extends Component {
   state = {
     imageKeyword: '',
+    page: 1,
   };
 
   handleFormSubmit = imageKeyword => {
@@ -16,11 +17,11 @@ class App extends Component {
   };
 
   render() {
-    const { imageKeyword } = this.state;
+    const { imageKeyword, page } = this.state;
     return (
       <div className="App">
         <Searchbar onSubmit={this.handleFormSubmit} />
-        <ImageGallery imageKeyword={imageKeyword} />
+        <ImageGallery imageKeyword={imageKeyword} page={page} />
         <ToastContainer autoClose={3000} />
       </div>
     );

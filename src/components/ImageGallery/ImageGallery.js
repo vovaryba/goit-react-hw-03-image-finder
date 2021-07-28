@@ -12,7 +12,7 @@ const per_page = 12;
 
 class ImageGallery extends Component {
   state = {
-    images: null,
+    images: [],
     error: null,
     status: 'idle',
     showModal: false,
@@ -23,7 +23,7 @@ class ImageGallery extends Component {
   componentDidUpdate(prevProps, prevState) {
     const prevKeyword = prevProps.imageKeyword;
     const nextKeyword = this.props.imageKeyword;
-    const { page } = this.state;
+    const { page } = this.props;
 
     if (prevKeyword !== nextKeyword) {
       this.setState({ status: 'pending', loading: true });
@@ -31,15 +31,25 @@ class ImageGallery extends Component {
       imagesAPI
         .fetchImages(URL, nextKeyword, page, API_KEY, per_page)
         .then(images => {
-          this.setState({
-            images: images.hits,
-            page: this.state.page + 1,
-            status: 'resolved',
-            loading: true,
-          });
+          if (images.length === 0) {
+            this.setState({
+              error: `Нет картинки с кодовым словом ${nextKeyword}`,
+              loading: true,
+              status: 'rejected',
+            });
+            return;
+          } else {
+            this.setState({
+              images: images.hits,
+              page: this.props.page + 1,
+              status: 'resolved',
+              loading: true,
+            });
+          }
           this.scrollWindow();
         })
-        .catch(error => this.setState({ error, status: 'rejected' }));
+        .catch(error => this.setState({ error, status: 'rejected' }))
+        .finally(() => this.setState({ loading: false }));
     }
   }
 
@@ -83,6 +93,7 @@ class ImageGallery extends Component {
   render() {
     const { images, error, status, showModal, modalImg, modalAlt, loading } =
       this.state;
+    const renderButton = images.length > 0 && !loading;
 
     if (status === 'idle') {
       return <div>Введите ключевое слово</div>;
@@ -93,7 +104,7 @@ class ImageGallery extends Component {
     }
 
     if (status === 'rejected') {
-      return <h1>{error.message}</h1>;
+      return <h1>{error}</h1>;
     }
 
     if (status === 'resolved') {
@@ -102,7 +113,7 @@ class ImageGallery extends Component {
           <ul className="ImageGallery">
             <ImageGalleryItem images={images} onClick={this.toggleModal} />
           </ul>
-          {loading && <Button onClick={this.buttonClick} />}
+          {renderButton && <Button onClick={this.buttonClick} />}
           {showModal && (
             <Modal onClose={this.toggleModal}>
               <img src={modalImg} alt={modalAlt} />
